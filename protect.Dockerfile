@@ -103,6 +103,37 @@ RUN --mount=target=/var/lib/apt/lists,type=cache --mount=target=/var/cache/apt,t
     && mkdir -p /data/unifi-core/config/http \
     && rm -f /usr/sbin/policy-rc.d
 
+# Create the network rename script (single line)
+RUN echo '#!/bin/bash' > /usr/local/bin/rename-interfaces.sh && \
+    echo 'sleep 2' >> /usr/local/bin/rename-interfaces.sh && \
+    echo 'if ip link show eth0 &>/dev/null; then' >> /usr/local/bin/rename-interfaces.sh && \
+    echo '    ip link set eth0 down' >> /usr/local/bin/rename-interfaces.sh && \
+    echo '    ip link set eth0 name enp0s1' >> /usr/local/bin/rename-interfaces.sh && \
+    echo '    ip link set enp0s1 up' >> /usr/local/bin/rename-interfaces.sh && \
+    echo 'fi' >> /usr/local/bin/rename-interfaces.sh && \
+    echo 'if ip link show eth1 &>/dev/null; then' >> /usr/local/bin/rename-interfaces.sh && \
+    echo '    ip link set eth1 down' >> /usr/local/bin/rename-interfaces.sh && \
+    echo '    ip link set eth1 name enp0s2' >> /usr/local/bin/rename-interfaces.sh && \
+    echo '    ip link set enp0s2 up' >> /usr/local/bin/rename-interfaces.sh && \
+    echo 'fi' >> /usr/local/bin/rename-interfaces.sh && \
+    echo 'ip route add default via 10.88.0.2' >> /usr/local/bin/rename-interfaces.sh && \
+    chmod +x /usr/local/bin/rename-interfaces.sh && \
+
+# Create systemd service (single line)
+    echo '[Unit]' > /etc/systemd/system/rename-interfaces.service && \
+    echo 'Description=Rename Network Interfaces' >> /etc/systemd/system/rename-interfaces.service && \
+    echo 'After=network-pre.target' >> /etc/systemd/system/rename-interfaces.service && \
+    echo 'Before=network.target network-online.target' >> /etc/systemd/system/rename-interfaces.service && \
+    echo '' >> /etc/systemd/system/rename-interfaces.service && \
+    echo '[Service]' >> /etc/systemd/system/rename-interfaces.service && \
+    echo 'Type=oneshot' >> /etc/systemd/system/rename-interfaces.service && \
+    echo 'ExecStart=/usr/local/bin/rename-interfaces.sh' >> /etc/systemd/system/rename-interfaces.service && \
+    echo 'RemainAfterExit=yes' >> /etc/systemd/system/rename-interfaces.service && \
+    echo '' >> /etc/systemd/system/rename-interfaces.service && \
+    echo '[Install]' >> /etc/systemd/system/rename-interfaces.service && \
+    echo 'WantedBy=multi-user.target' >> /etc/systemd/system/rename-interfaces.service && \
+# Enable Service
+    systemctl enable rename-interfaces.service
 COPY files/sbin /sbin/
 COPY files/usr /usr/
 COPY files/etc /etc/

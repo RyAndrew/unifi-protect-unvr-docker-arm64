@@ -40,8 +40,20 @@ services:
       - /var/run
       - /var/run/lock
     privileged: true # required
-    network_mode: host # does not work on macOS, use ports config below
-#    network_mode: none
+    #network_mode: host # does not work on macOS, use ports config below
+    networks:
+      macvlannet:
+      nic2:
+        #mac_address: B7:D1:8C:1E:28:ED
+networks:
+  macvlannet:
+    external: true
+  nic2:
+    enable_ipv6: true
+    ipam:
+      driver: default
+      config:
+      - subnet: 172.19.0.0/24
 #    ports:
 #      - "80:80/tcp"
 #      - "443:443/tcp"
